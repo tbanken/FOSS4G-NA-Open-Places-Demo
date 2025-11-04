@@ -1,0 +1,40 @@
+---
+title: "Get Bagel Shops in NYC"
+output: html_notebook
+---
+
+```{r, warning=FALSE}
+library(nominatimlite)
+library(sf)
+
+nyc <- geo_lite_sf("New York City", points_only = FALSE)
+bbox <- st_bbox(nyc)
+bbox
+```
+
+```{r}
+library(overtureR)
+
+ls_place <- open_curtain(base_url = "s3://overturemaps-us-west-2/release/2025-10-22.0/",
+type="place", spatial_filter = bbox, as_sf = TRUE)
+ls_place
+```
+
+```{r}
+library(dplyr)
+
+bagel_shops <- ls_place %>% filter(categories$primary == "bagel_shop")
+
+bagel_shops_clipped <- st_intersection(bagel_shops, nyc)
+bagel_shops_clipped
+```
+
+```{r}
+library(leaflet)
+
+leaflet(bagel_shops_clipped) %>%
+addProviderTiles(providers$CartoDB.DarkMatter) %>%
+addCircleMarkers(radius = 2, color = "orange", stroke = FALSE, fillOpacity = 1,
+popup = ~names$primary)
+
+```
